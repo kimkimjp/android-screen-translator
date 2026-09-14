@@ -79,3 +79,6 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 | `TextUtils` | 行連結・言語判定の純粋ロジック（ユニットテストあり） |
 | `FloatingButton` / `ResultOverlay` | 重ね表示の UI |
 | `TranslateTileService` | クイック設定タイル |
+
+## ライセンス
+MIT License（[LICENSE](LICENSE)）。アイコンは Material Icons（Apache License 2.0）を使用しています。
