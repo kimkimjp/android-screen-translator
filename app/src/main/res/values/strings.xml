@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">画面翻訳</string>
+    <string name="tile_label">画面を翻訳</string>
+
+    <string name="section_permissions">1. 権限</string>
+    <string name="permission_overlay">他のアプリの上に重ねて表示</string>
+    <string name="permission_notification">通知</string>
+    <string name="grant">許可する</string>
+    <string name="status_granted">許可済み</string>
+    <string name="status_overlay_required">必須：ボタンと訳文の表示に使います</string>
+    <string name="status_notification_recommended">推奨：翻訳中であることを通知に表示します</string>
+
+    <string name="section_models">2. 翻訳モデル</string>
+    <string name="download">ダウンロード</string>
+    <string name="models_ready">日本語・中国語・韓国語・英語のモデルは準備済みです。その他の言語は初回使用時に自動取得します。</string>
+    <string name="models_missing">未取得：%1$s（各 約30MB。Wi-Fi 推奨）</string>
+    <string name="models_downloading">%1$sのモデルをダウンロード中…</string>
+    <string name="models_error">ダウンロードに失敗しました：%1$s</string>
+
+    <string name="section_session">3. 翻訳の開始</string>
+    <string name="floating_button">フローティングボタンを表示</string>
+    <string name="start">開始</string>
+    <string name="stop">停止</string>
+    <string name="session_running">有効：ボタン・クイック設定タイル・通知から翻訳できます</string>
+    <string name="session_stopped">停止中</string>
+
+    <string name="section_usage">使い方</string>
+    <string name="usage">・「開始」を押し、画面共有の確認で「画面全体」を選んで許可します。\n・翻訳したいアプリを開き、丸いボタンをタップすると訳文が元の位置に重なります。\n・訳文はタップまたは戻る操作で閉じます。長押ししている間は原文が見えます。\n・クイック設定（通知シェード）の編集から「画面を翻訳」タイルを追加すると、シェードからも翻訳できます。\n・端末を再起動したり共有を停止した場合は、もう一度「開始」してください（Android の仕様上、毎回確認が必要です）。</string>
+
+    <string name="channel_name">画面翻訳セッション</string>
+    <string name="notification_title">画面翻訳が有効です</string>
+    <string name="notification_text">ボタンまたは「翻訳」で現在の画面を翻訳します</string>
+    <string name="action_translate">翻訳</string>
+    <string name="action_stop">停止</string>
+    <string name="resume_title">画面翻訳が停止しました</string>
+    <string name="resume_text">画面ロックなどで画面共有が終了しました。タップで再開します</string>
+
+    <string name="translating">翻訳中…</string>
+    <string name="no_text_found">文字が見つかりませんでした</string>
+    <string name="nothing_to_translate">翻訳が必要な文字はありませんでした</string>
+    <string name="downloading_model">%1$sの翻訳モデルをダウンロード中…</string>
+    <string name="error_no_frame">画面を取得できませんでした</string>
+    <string name="error_translate">翻訳に失敗しました：%1$s</string>
+</resources>
