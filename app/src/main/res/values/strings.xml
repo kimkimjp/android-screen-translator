@@ -14,7 +14,7 @@
     <string name="section_models">2. 翻訳モデル</string>
     <string name="download">ダウンロード</string>
     <string name="models_ready">日本語・中国語・韓国語・英語のモデルは準備済みです。その他の言語は初回使用時に自動取得します。</string>
-    <string name="models_missing">未取得：%1$s（各 約30MB。Wi-Fi 推奨）</string>
+    <string name="models_missing">未取得：%1$s（各 約30MB。Wi-Fi 推奨）\n英語はアプリに内蔵済みのため、ダウンロード不要です。</string>
     <string name="models_downloading">%1$sのモデルをダウンロード中…</string>
     <string name="models_error">ダウンロードに失敗しました：%1$s</string>
 
