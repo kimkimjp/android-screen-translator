@@ -133,7 +133,9 @@ class CaptureService : Service() {
                 return@launch
             }
 
-            if (button != null) button.setBusy(true) else toast(R.string.translating)
+            // ボタンが「ある」だけでは駄目で、実際に画面に出ていないと点滅が見えない。
+            // 重ね表示を拒否されたときは代わりにトーストで知らせる。
+            if (button?.isShown == true) button.setBusy(true) else toast(R.string.translating)
             try {
                 val blocks = recognizer.recognize(bitmap, excludeTop = statusBarHeight())
                 if (blocks.isEmpty()) {

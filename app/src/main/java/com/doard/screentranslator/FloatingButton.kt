@@ -20,7 +20,16 @@ import kotlin.math.roundToInt
 
 /** どのアプリの上にも表示される、ドラッグ可能な丸い翻訳ボタン。 */
 class FloatingButton(private val context: Context, private val onTap: () -> Unit) {
-    private val windowManager = context.getSystemService(WindowManager::class.java)
+    // 重ね表示のウィンドウは、Service の Context ではなくウィンドウコンテキストから扱うのが Android の作法。
+    // Service の Context から currentWindowMetrics を読むと、Android 12 以降で StrictMode の
+    // IncorrectContextUseViolation になり、分割画面や折りたたみでは値そのものもずれ得る。
+    private val windowContext: Context =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            context.createWindowContext(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null)
+        } else {
+            context
+        }
+    private val windowManager = windowContext.getSystemService(WindowManager::class.java)
     private val density = context.resources.displayMetrics.density
     private val sizePx = (52 * density).roundToInt()
     private var view: ImageView? = null
@@ -35,8 +44,10 @@ class FloatingButton(private val context: Context, private val onTap: () -> Unit
         gravity = Gravity.TOP or Gravity.START
         val saved = Prefs.buttonPosition(context)
         val screen = screenSize()
-        x = saved?.first ?: (screen.x - sizePx)
-        y = saved?.second ?: (screen.y / 3)
+        // 横画面の右端に置いたまま終了し、次に縦画面で復元すると画面外に出たきり触れなくなる。
+        // onScreenChanged は回転したときしか呼ばれないので、復元時にも画面内へ収める。
+        x = (saved?.first ?: (screen.x - sizePx)).coerceIn(0, (screen.x - sizePx).coerceAtLeast(0))
+        y = (saved?.second ?: (screen.y / 3)).coerceIn(0, (screen.y - sizePx).coerceAtLeast(0))
     }
 
     val isShown get() = view != null

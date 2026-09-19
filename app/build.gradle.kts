@@ -11,8 +11,8 @@ android {
         applicationId = "com.doard.screentranslator"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.5"
 
         // Android 14 以降の実機は arm64 のみ。ML Kit のネイティブライブラリが大きいので他 ABI は含めない
         // エミュレータ確認用: gradlew assembleDebug -Pabis=x86_64
