@@ -40,7 +40,10 @@ class ScreenTranslator : AutoCloseable {
             }
             if (!isModelReady(lang)) {
                 onModelDownload(lang)
+                // Wi-Fi 必須にはしない。モバイル回線だとダウンロードが始まらず、
+                // 翻訳が理由の分からないまま失敗する。代わりに呼び出し側がトーストで知らせる。
                 translator.downloadModelIfNeeded(DownloadConditions.Builder().build()).await()
+                downloadedModels = null
             }
             for (block in group) {
                 results[block] = translator.translate(block.text).await()
@@ -61,11 +64,22 @@ class ScreenTranslator : AutoCloseable {
         }.also { Log.d(TAG, "lang=$it candidates=${candidates.take(3)} text=${text.take(40)}") }
     }
 
-    private suspend fun isModelReady(lang: String): Boolean {
-        val downloaded = RemoteModelManager.getInstance()
+    /**
+     * 取得済みモデルの一覧。1画面に複数言語があると言語ごとに問い合わせが走るので覚えておく。
+     * ダウンロード後は null に戻して取り直す。
+     */
+    private var downloadedModels: Set<String>? = null
+
+    private suspend fun downloadedModels(): Set<String> =
+        downloadedModels ?: RemoteModelManager.getInstance()
             .getDownloadedModels(TranslateRemoteModel::class.java).await()
             .map { it.language }
             .toSet()
+            .also { downloadedModels = it }
+
+    private suspend fun isModelReady(lang: String): Boolean {
+        // 英語モデルは ML Kit に内蔵されていて個別のダウンロードは要らない（公式ドキュメント）。
+        val downloaded = downloadedModels()
         return (lang == TranslateLanguage.ENGLISH || lang in downloaded) && TARGET in downloaded
     }
 
@@ -73,6 +87,7 @@ class ScreenTranslator : AutoCloseable {
         languageId.close()
         translators.values.forEach { it.close() }
         translators.clear()
+        downloadedModels = null
     }
 
     companion object {

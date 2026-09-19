@@ -32,6 +32,13 @@ class ScreenGrabber(private val context: Context, projection: MediaProjection) {
     private var latest: Image? = null
     private var frameCount = 0L
 
+    /**
+     * Bitmap へ写すときの作業バッファ。WQHD 級だと1枚あたり十数MB あり、キャプチャのたびに
+     * `allocateDirect` すると連続翻訳でネイティブメモリを食い潰す。足りている限り使い回す。
+     * `lock` の中からのみ触ること。
+     */
+    private var copyBuffer: ByteBuffer? = null
+
     init {
         val (width, height, dpi) = displaySize()
         reader = newReader(width, height)
@@ -65,6 +72,7 @@ class ScreenGrabber(private val context: Context, projection: MediaProjection) {
         synchronized(lock) {
             latest?.close()
             latest = null
+            copyBuffer = null
             reader.close()
         }
         thread.quitSafely()
@@ -119,7 +127,10 @@ class ScreenGrabber(private val context: Context, projection: MediaProjection) {
         val stridedWidth = plane.rowStride / pixelStride
         // 最終行は rowStride 分の余白が無いことがあるため、必要サイズのバッファにコピーしてから読む
         val source = plane.buffer.duplicate().apply { rewind() }
-        val buffer = ByteBuffer.allocateDirect(maxOf(stridedWidth * image.height * pixelStride, source.remaining()))
+        val needed = maxOf(stridedWidth * image.height * pixelStride, source.remaining())
+        val buffer = copyBuffer?.takeIf { it.capacity() >= needed }
+            ?: ByteBuffer.allocateDirect(needed).also { copyBuffer = it }
+        buffer.clear()
         buffer.put(source)
         buffer.rewind()
         val padded = Bitmap.createBitmap(stridedWidth, image.height, Bitmap.Config.ARGB_8888)
