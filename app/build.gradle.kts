@@ -47,6 +47,15 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
+
+    // 依存は 2026-09-19 時点で意図的に据え置き。新しくすると次が起きることを実測済み:
+    //   - AndroidX の新しい版は AGP 8.9.1〜9.1.0 と compileSdk 36〜37 を要求する（AAR metadata で弾かれる）
+    //   - coroutines 1.10 以降は Kotlin 2.2 でビルドされていて Kotlin 2.0.21 では読めない
+    //   - AGP 8.7.3 で通る範囲（core-ktx 1.16.0 / activity-ktx 1.10.1 / lifecycle 2.9.4）まで上げると、
+    //     APK が 20.3MB → 24.2MB に増え、さらに lifecycle 同梱の lint 検出器が AGP 8.7.3 の lint を
+    //     クラッシュさせる（NonNullableMutableLiveDataDetector）。機能面の利得は無い。
+    // 上げるなら AGP と compileSdk の更新（Android 16 対応）とセットで行うこと。
+
     // ML Kit: OCR (モデル同梱), 言語判定, オンデバイス翻訳
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation("com.google.mlkit:text-recognition-korean:16.0.1")
