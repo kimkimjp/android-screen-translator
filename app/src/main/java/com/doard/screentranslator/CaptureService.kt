@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.content.pm.ServiceInfo
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
@@ -104,7 +105,8 @@ class CaptureService : Service() {
     private fun updateFloatingButton() {
         if (projection != null && Prefs.showFloatingButton(this)) {
             val button = floatingButton ?: FloatingButton(this) { capture(0) }.also { floatingButton = it }
-            button.show()
+            // 重ね表示を拒否されてもセッションは残す。通知とタイルからは翻訳できる。
+            if (!button.show()) toast(R.string.error_overlay)
         } else {
             floatingButton?.remove()
             floatingButton = null
@@ -144,8 +146,8 @@ class CaptureService : Service() {
                 }
                 if (translated.isEmpty()) {
                     toast(R.string.nothing_to_translate)
-                } else {
-                    overlay.show(translated)
+                } else if (!overlay.show(translated)) {
+                    toast(R.string.error_overlay)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "translation failed", e)
@@ -155,6 +157,12 @@ class CaptureService : Service() {
                 floatingButton?.setBusy(false)
             }
         }
+    }
+
+    /** 画面を回すとボタンが画面外に出ることがあるので、位置を入れ直す。 */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        floatingButton?.onScreenChanged()
     }
 
     /** 時計や通知アイコンを翻訳しないよう、ステータスバー内の文字は対象外にする */

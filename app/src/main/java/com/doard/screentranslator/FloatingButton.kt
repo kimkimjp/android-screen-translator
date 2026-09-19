@@ -4,8 +4,11 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Point
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -31,15 +34,35 @@ class FloatingButton(private val context: Context, private val onTap: () -> Unit
     ).apply {
         gravity = Gravity.TOP or Gravity.START
         val saved = Prefs.buttonPosition(context)
-        x = saved?.first ?: (context.resources.displayMetrics.widthPixels - sizePx)
-        y = saved?.second ?: (context.resources.displayMetrics.heightPixels / 3)
+        val screen = screenSize()
+        x = saved?.first ?: (screen.x - sizePx)
+        y = saved?.second ?: (screen.y / 3)
     }
 
     val isShown get() = view != null
 
+    /**
+     * 画面の大きさ。Service の `resources.displayMetrics` は画面を回しても更新されないことがあり、
+     * 縦画面の幅のままスナップ先を計算してボタンが画面外に飛ぶ。ウィンドウ側の値を見る。
+     */
+    private fun screenSize(): Point =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = windowManager.currentWindowMetrics.bounds
+            Point(bounds.width(), bounds.height())
+        } else {
+            Point().also {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay.getRealSize(it)
+            }
+        }
+
+    /**
+     * @return 表示できたか。`Settings.canDrawOverlays` が true でも `addView` を拒否するメーカーがあり、
+     *   投げっぱなしにするとキャプチャのセッションごと道連れになる。
+     */
     @SuppressLint("ClickableViewAccessibility")
-    fun show() {
-        if (view != null) return
+    fun show(): Boolean {
+        if (view != null) return true
         val padding = (13 * density).roundToInt()
         val button = ImageView(context).apply {
             setImageResource(R.drawable.ic_translate)
@@ -52,14 +75,30 @@ class FloatingButton(private val context: Context, private val onTap: () -> Unit
             contentDescription = context.getString(R.string.tile_label)
             setOnTouchListener(DragListener())
         }
-        windowManager.addView(button, params)
-        view = button
+        return try {
+            windowManager.addView(button, params)
+            view = button
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "overlay addView was rejected", e)
+            false
+        }
     }
 
     fun remove() {
         setBusy(false)
-        view?.let { windowManager.removeView(it) }
+        view?.let { runCatching { windowManager.removeView(it) } }
         view = null
+    }
+
+    /** 回転などで画面の大きさが変わったとき、ボタンを画面内に戻す。 */
+    fun onScreenChanged() {
+        val v = view ?: return
+        val screen = screenSize()
+        params.x = params.x.coerceIn(0, (screen.x - sizePx).coerceAtLeast(0))
+        params.y = params.y.coerceIn(0, (screen.y - sizePx).coerceAtLeast(0))
+        runCatching { windowManager.updateViewLayout(v, params) }
+        Prefs.setButtonPosition(context, params.x, params.y)
     }
 
     /** キャプチャに写り込まないよう一時的に隠す */
@@ -123,11 +162,15 @@ class FloatingButton(private val context: Context, private val onTap: () -> Unit
         }
 
         private fun snapToEdge(v: View) {
-            val metrics = context.resources.displayMetrics
-            params.x = if (params.x + sizePx / 2 < metrics.widthPixels / 2) 0 else metrics.widthPixels - sizePx
-            params.y = params.y.coerceIn(0, (metrics.heightPixels - sizePx).coerceAtLeast(0))
-            windowManager.updateViewLayout(v, params)
+            val screen = screenSize()
+            params.x = if (params.x + sizePx / 2 < screen.x / 2) 0 else screen.x - sizePx
+            params.y = params.y.coerceIn(0, (screen.y - sizePx).coerceAtLeast(0))
+            runCatching { windowManager.updateViewLayout(v, params) }
             Prefs.setButtonPosition(context, params.x, params.y)
         }
+    }
+
+    companion object {
+        private const val TAG = "FloatingButton"
     }
 }

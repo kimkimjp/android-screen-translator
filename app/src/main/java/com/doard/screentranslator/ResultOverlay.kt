@@ -11,6 +11,7 @@ import android.os.Build
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -27,7 +28,8 @@ class ResultOverlay(private val context: Context) {
 
     val isShowing get() = view != null
 
-    fun show(blocks: List<TranslatedBlock>) {
+    /** @return 表示できたか。メーカーによっては重ね表示が許可済みでも `addView` が拒否される。 */
+    fun show(blocks: List<TranslatedBlock>): Boolean {
         dismiss()
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -43,14 +45,24 @@ class ResultOverlay(private val context: Context) {
             }
         }
         val v = ResultView(context, blocks) { dismiss() }
-        windowManager.addView(v, params)
-        v.requestFocus()
-        view = v
+        return try {
+            windowManager.addView(v, params)
+            v.requestFocus()
+            view = v
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "overlay addView was rejected", e)
+            false
+        }
     }
 
     fun dismiss() {
-        view?.let { windowManager.removeView(it) }
+        view?.let { runCatching { windowManager.removeView(it) } }
         view = null
+    }
+
+    companion object {
+        private const val TAG = "ResultOverlay"
     }
 
     @SuppressLint("ViewConstructor")

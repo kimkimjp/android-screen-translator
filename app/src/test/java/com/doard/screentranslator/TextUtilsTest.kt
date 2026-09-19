@@ -106,4 +106,32 @@ class TextUtilsTest {
         assertEquals("en", TextUtils.resolveSourceLanguage(text, listOf("zh-Latn" to 0.9f), allSupported))
         assertEquals("en", TextUtils.resolveSourceLanguage(text, listOf("xx" to 0.9f)) { it == "en" })
     }
+
+    @Test
+    fun merge_keepsKoreanBlockThatOverlapsNothing() {
+        // 中国語側に対応する領域が無いハングルのブロックは、何も消さずに残る
+        val zh = listOf(B("你好", 0, 10))
+        val ko = listOf(B("안녕하세요", 20, 30))
+        assertEquals(listOf("你好", "안녕하세요"), merge(zh, ko).map { it.text })
+    }
+
+    @Test
+    fun merge_handlesEmptyInput() {
+        assertEquals(emptyList<B>(), merge(emptyList(), emptyList()))
+        val zh = listOf(B("设置", 0, 10))
+        assertEquals(zh, merge(zh, emptyList()))
+    }
+
+    @Test
+    fun resolve_longTextWithLowConfidenceFallsBackToEnglish() {
+        // 対応言語だが確信度が足りないときは、推測せず英語として扱う
+        val text = "this line is long enough to skip the short label rule"
+        assertEquals("en", TextUtils.resolveSourceLanguage(text, listOf("de" to 0.3f), allSupported))
+    }
+
+    @Test
+    fun resolve_shortTextWithoutEnglishCandidateUsesTopCandidate() {
+        // 短文の英語優先は「英語の候補があるとき」だけ。無ければ確信度で決める
+        assertEquals("de", TextUtils.resolveSourceLanguage("Profil", listOf("de" to 0.9f), allSupported))
+    }
 }
